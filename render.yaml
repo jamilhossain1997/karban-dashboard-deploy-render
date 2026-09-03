@@ -2,6 +2,8 @@
 #
 # The service names determine the public URLs used below. If a name is already
 # taken in your Render workspace, rename BOTH the service and its matching URL.
+version: "1"
+
 services:
   - type: web
     name: kanban-api
