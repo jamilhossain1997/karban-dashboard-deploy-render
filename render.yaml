@@ -22,7 +22,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: CORS_ORIGIN
-        value: https://kanban-web.onrender.com
+        value: https://kanban-web-l0hp.onrender.com
 
   - type: web
     name: kanban-web
