@@ -1,0 +1,91 @@
+generator client {
+  provider      = "prisma-client-js"
+  // "native" covers running `npx prisma generate` directly on your host
+  // (Linux/macOS/Windows) for local dev; "linux-musl-openssl-3.0.x" is the
+  // engine the Alpine-based Docker image needs at runtime.
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BoardRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  name          String
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  ownedBoards   Board[]        @relation("BoardOwner")
+  boardMembers  BoardMember[]
+
+  @@map("users")
+}
+
+model Board {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  ownerId     String
+  owner       User          @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     BoardMember[]
+  columns     Column[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("boards")
+}
+
+// Join table granting a user access to a board (owner is also implicitly a member with role OWNER,
+// but we materialize it here too so all authorization checks are a single query against BoardMember).
+model BoardMember {
+  id        String    @id @default(uuid())
+  boardId   String
+  userId    String
+  role      BoardRole @default(EDITOR)
+  board     Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@unique([boardId, userId])
+  @@map("board_members")
+}
+
+model Column {
+  id        String   @id @default(uuid())
+  title     String
+  position  Float
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([boardId])
+  @@map("columns")
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  // Fractional-indexing position: allows O(1) reorder/move without rewriting
+  // every sibling row's position (no gaps to renumber, no locking contention).
+  position    Float
+  columnId    String
+  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([columnId])
+  @@map("tasks")
+}

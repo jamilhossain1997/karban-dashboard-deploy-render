@@ -1,0 +1,24 @@
+# Use this alongside docker-compose.yml to run the backend against a managed
+# Postgres provider (e.g. Aiven) instead of the local `db` container:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.aiven.yml up --build backend frontend
+#
+# Requires:
+#   1. backend/certs/aiven-ca.pem  (the provider's CA certificate)
+#   2. A .env file in this same directory (project root) containing:
+#        DATABASE_URL=postgresql://avnadmin:<password>@pg-135ebd60-kabanboard.a.aivencloud.com:19823/defaultdb?sslmode=verify-ca&sslrootcert=/app/certs/aiven-ca.pem
+#      (docker compose reads project-root .env automatically for ${...} substitution below)
+#
+# Note: this file must set `environment.DATABASE_URL` explicitly rather than
+# relying on `env_file` - Compose gives `environment:` values from the base
+# file priority over `env_file` entries from an override, so an env_file here
+# alone would silently be ignored.
+
+services:
+  backend:
+    depends_on: []
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+    volumes:
+      - ./backend/certs:/app/certs:ro
+
