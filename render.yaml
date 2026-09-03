@@ -35,7 +35,7 @@ services:
       # Render passes this as a Docker build ARG, and Next.js embeds it in the
       # browser bundle during `npm run build`.
       - key: NEXT_PUBLIC_API_URL
-        value: https://kanban-api.onrender.com/api
+        value: https://kanban-api-2k5s.onrender.com/api
 
 databases:
   - name: kanban-db
